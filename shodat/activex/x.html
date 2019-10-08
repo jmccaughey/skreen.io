@@ -1,0 +1,41 @@
+<html>
+<head>
+	<title>test</title>
+	
+<OBJECT ID="ob" WIDTH=32 HEIGHT=32
+    CLASSID="CLSID:CF11AE46-27B0-475D-8187-133D1D47BFA4"
+    CODEBASE="http://deskblast.com/deskblast/afxsimple-signed.cab#Version=-1,-1,-1,-1">
+	<PARAM name="blastId" value="119185219"/>
+	<PARAM name="blasterId" value="1246574740"/> 
+	<PARAM name="key" value="abcb2972-3013-48f3-9164-26b665f428ad"/>
+</OBJECT>
+	<script type="text/javascript">
+		function get42() {
+			alert(ob.get42());
+		}
+		function throwException() {
+			try {
+				var txt = ob.throwException();
+			}
+			catch(e) {
+				alert(e.message);
+			}
+		}
+		function callback() {
+			var r = ob.callback(function() { alert('callback'); });
+		}
+		
+	</script>
+</head>
+<body>
+	<h5>test</h5>
+	<p>
+		<button onclick='get42()'>Call get42()</button>
+		<button onclick='throwException()'>Call throwException()</button>
+		<button onclick='callback()'>Call callback()</button>
+		<button onclick="ob.startScraping('deskblast.com', 80, 'deskblast', false)">Call startScraping()</button>
+		<button onclick="ob.stopScraping()">Stop scraping</button>
+	</p>
+
+</body>
+</html>

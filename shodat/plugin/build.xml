@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+
+<project name="shodat" default="sign-installers">
+
+	<property file="build.properties" />
+	<property name="timestamp.parm" value="-t http://timestamp.verisign.com/scripts/timstamp.dll" />
+	<property name="output" value="np${ant.project.name}.dll" />
+	<property name="linux.output" value="np${ant.project.name}.so" />
+	<property name="build.dir" value="build" />
+	<property name="mingw.bin.prefix" value="/usr/bin/i586-mingw32msvc-" />
+	<property name="mingw.gpp" value="g++"/>
+	<property name="linux.gpp" value="g++"/>
+	<property name="jpeg.base" value="../libjpeg-turbo" />	
+	<property name="jpeg.lib" value="libjpeg.a" />
+	<property name="common" value="../windows-scrapers-common2" />
+	<property name="osslsigncode.dir" value="../osslsigncode-1.4/" />
+	<property name="osslsigncode" value="${osslsigncode.dir}osslsigncode" />
+	<property name="signing.root" value="../signing2/2013" />
+	<property name="signing.file" value="webhuddle_2013" />
+	<property name="signing.file.path" value="${signing.root}/${signing.file}"/>
+    <property name="nsis.home" value=""/>
+	<property name="needs.netinet" value=""/>
+
+	<target name="init">
+		<mkdir dir="${build.dir}" />
+	</target>
+	<target name="compile.resource" depends="init">
+		<exec executable="${mingw.bin.prefix}windres" failonerror="true">
+			<arg line=" 
+			-o ${build.dir}/${ant.project.name}.o ${ant.project.name}.rc 
+			" />
+		</exec>
+	</target>
+
+	<target name="token.javac">
+		<javac srcdir="." />
+	</target>
+
+	<target name="build.dll" depends="compile.resource">
+	    <echo>${jpeg.base}/libjpeg-turbo-1.2.x/</echo>
+		<exec executable="${mingw.bin.prefix}${mingw.gpp}" failonerror="true">
+			  <arg line=" -shared -fno-exceptions -Wl,--enable-stdcall-fixup,--kill-at -O2 ${ant.project.name}.def ${build.dir}/${ant.project.name}.o ${common}/Trace.cpp ${common}/HashString.cpp ${common}/SubtileInfo.cpp ${common}/Region.cpp ../GifEncoder2/gifencode.c ../GifEncoder2/GifSpriter.cpp ${common}/Poster.cpp ${common}/ScraperPosterMetaData.cpp ${common}/Win32ScraperPoster.cpp npp_gate.cpp np_entry.cpp ../jpeg_integration2/jpeg_mem_dest.cpp ../md5/md5.cpp plugin.cpp npn_gate.cpp -o ${build.dir}/${output} ${jpeg.base}/build-win32/${jpeg.lib} -static-libstdc++ -static-libgcc -lwininet -lgdi32 -lws2_32 -I/home/john/npapi-sdk-read-only/headers -Igecko-sdk/include -I${jpeg.base}/libjpeg-turbo-1.2.x/ -I${jpeg.base}/build-win32/ -I${common} -I../md5 -I../jpeg_integration2 -D_WIN32 -DWIN32 -D_WINDOWS -DXP_WIN32 -DMOZILLA_STRICT_API -DXPCOM_GLUE -DXP_WIN -D_X86_ -D_USRDLL -DBASIC_EXPORTS ${needs.netinet}" />
+			<!--
+				this is to include libjpeg as source files.  It did not seem to make the binary smaller or faster
+				<arg line="	-enable-stdcall-fixup -O2 -shared ${ant.project.name}.def ${build.dir}/${ant.project.name}.o ../jpeg-7/jaricom.c ../jpeg-7/jcparam.c ../jpeg-7/jerror.c ../jpeg-7/jcmainct.c ../jpeg-7/jccoefct.c ../jpeg-7/jchuff.c ../jpeg-7/jcarith.c ../jpeg-7/jfdctflt.c ../jpeg-7/jfdctfst.c ../jpeg-7/jfdctint.c ../jpeg-7/jcdctmgr.c ../jpeg-7/jcprepct.c ../jpeg-7/jcsample.c ../jpeg-7/jccolor.c ../jpeg-7/jcmaster.c ../jpeg-7/jcinit.c ../jpeg-7/jutils.c ../jpeg-7/jmemansi.c ../jpeg-7/jmemmgr.c ../jpeg-7/jcapimin.c ../jpeg-7/jcmarker.c ../jpeg-7/jcomapi.c ../jpeg-integration/jpeg_mem_dest.cpp ../jpeg-7/jcapistd.c ${common}/Trace.cpp ${common}/Region.cpp ${common}/Poster.cpp ${common}/ScraperPosterMetaData.cpp ${common}/Win32ScraperPoster.cpp npp_gate.cpp np_entry.cpp ../md5/md5.cpp plugin.cpp npn_gate.cpp -o ${build.dir}/${output} -lwininet -lgdi32 -lws2_32 -Igecko-sdk/include -I${jpeg.base} -I${common} -I../md5 -I../jpeg-integration -DWIN32 -D_WINDOWS -DXP_WIN32 -DMOZILLA_STRICT_API -DXPCOM_GLUE -DXP_WIN -D_X86_ -D_USRDLL -DBASIC_EXPORTS" />
+			-->
+		</exec>
+	</target>
+
+    <target name="build.so.64">
+        <exec executable="${linux.gpp}" failonerror="true">
+                <!--<arg line=" -shared -fno-exceptions -fPIC -g ${common}/Trace.cpp ${common}/HashString.cpp ${common}/SubtileInfo.cpp ${common}/Region.cpp ../GifEncoder2/gifencode.c ../GifEncoder2/GifSpriter.cpp ../randd/CurlPoster.cpp ${common}/ScraperPosterMetaData.cpp ${common}/X11Screen.cpp ${common}/X11ScraperPoster.cpp npp_gate.cpp np_entry.cpp ../jpeg_integration2/jpeg_mem_dest.cpp ../md5/md5.cpp X11plugin.cpp npn_gate.cpp -o ${build.dir}/${linux.output} -I../md5/ -I../jpeg_integration2/ -I../libjpeg-turbo-linux-build/ -I../libjpeg-turbo/ -I/usr/include/ -lX11 -lXrandr -lcurl -static-libstdc++ -static-libgcc -I/home/john/npapi-sdk-read-only/headers -I${jpeg.base} -I${common} -I../md5 -I../jpeg_integration2 -DXP_UNIX=1 -DMOZ_X11=1 -DMOZILLA_STRICT_API -DXPCOM_GLUE -D_X86_ " />-->
+        		<arg line=" -shared -fno-exceptions -fPIC -g ${common}/Trace.cpp npp_gate.cpp np_entry.cpp X11plugin.cpp npn_gate.cpp -o ${build.dir}/${linux.output} -I../md5/ -I../jpeg_integration2/ -I../libjpeg-turbo-linux-build/ -I../libjpeg-turbo/ -I/usr/include/ -lX11 -lXrandr -lcurl -static-libstdc++ -static-libgcc -I/home/john/npapi-sdk-read-only/headers -I${jpeg.base} -I${common} -I../md5 -I../jpeg_integration2 -DXP_UNIX=1 -DMOZ_X11=1 -DMOZILLA_STRICT_API -DXPCOM_GLUE -D_x86_64_ " />
+        </exec>
+    </target>
+	
+	<target name="strip" depends="build.dll">
+		<echo>stripping binary...</echo>
+		<exec executable="${mingw.bin.prefix}strip" failonerror="true">
+			<arg line="${build.dir}/${output}" />
+		</exec>
+	</target>
+
+	<target name="installer" depends="strip">
+		<filter token="separator" value="${file.separator}"/>
+		<filter token="silent.comment" value=""/>
+		<filter token="silent.suffix" value=""/>
+		<copy file="plugin_installer.nsi.in" tofile="plugin_installer.nsi" filtering="true"/>
+		<exec executable="${nsis.home}makensis" failonerror="true">
+			<arg line="plugin_installer.nsi" />
+		</exec>
+	</target>
+
+	<target name="silent-installer" depends="strip">
+		<filter token="separator" value="${file.separator}"/>
+		<filter token="silent.comment" value=";"/>
+		<filter token="silent.suffix" value="q"/>
+		<copy file="plugin_installer.nsi.in" tofile="silent_plugin_installer.nsi" filtering="true"/>
+		<exec executable="${nsis.home}makensis" failonerror="true">
+			<arg line="silent_plugin_installer.nsi" />
+		</exec>
+	</target>
+	
+	<target name="sign-installer" depends="installer">
+		<move file="${build.dir}/${ant.project.name}.exe" tofile="${build.dir}/${ant.project.name}-unsigned.exe" />
+		<echo>signing.file.path: ${signing.file.path}</echo>
+		<exec executable="${osslsigncode}" failonerror="true">
+			<arg line=" -pkcs12 ${signing.file.path}.pfx -pass password -n Deskblast -i http://deskblast.com -in ${build.dir}/${ant.project.name}-unsigned.exe -out ${build.dir}/${ant.project.name}.exe ${timestamp.parm}" />
+		</exec>
+	</target>
+
+	<target name="sign-silent-installer" depends="silent-installer">
+		<move file="${build.dir}/${ant.project.name}q.exe" tofile="${build.dir}/${ant.project.name}q-unsigned.exe" />
+		<exec executable="${osslsigncode}" failonerror="true">
+			<arg line=" -pkcs12 ${signing.file.path}.pfx -pass password -n Deskblast -i http://deskblast.com -in ${build.dir}/${ant.project.name}q-unsigned.exe -out ${build.dir}/${ant.project.name}q.exe ${timestamp.parm}" />
+		</exec>
+	</target>
+
+	<target name="sign-installers" depends="sign-installer, sign-silent-installer">
+	</target>
+
+	<target name="prepare-xpi" depends="strip">
+		<mkdir dir="${build.dir}/xpi/plugins" />
+		<copy file="install.rdf" todir="${build.dir}/xpi" />
+		<copy file="${build.dir}/${output}" todir="${build.dir}/xpi/plugins" />
+		<!--<zip basedir="${build.dir}/xpi" destfile="${build.dir}/deskblast.xpi"/>-->
+	</target>
+
+	<target name="sign-xpi" depends="prepare-xpi">
+		<exec executable="signtool" failonerror="true">
+			<arg line="-d ${cert.dir} -k bcf1c902-98f2-4e7d-b17c-edb4b58dc07d -p password ${build.dir}/xpi/" />
+		</exec>
+	</target>
+
+	<target name="build-xpi" depends="sign-xpi">
+		<exec executable="zip" dir="${build.dir}/xpi">
+			<arg line="deskblast.xpi META-INF/zigbert.rsa" />
+		</exec>
+		<exec executable="zip" dir="${build.dir}/xpi">
+			<arg value="-D" />
+			<arg value="deskblast.xpi" />
+			<arg value="install.rdf" />
+			<arg value="plugins/npbasic.dll" />
+			<arg value="META-INF/zigbert.sf" />
+			<arg value="META-INF/manifest.mf" />
+		</exec>
+	</target>
+
+	<target name="clean">
+		<delete dir="${build.dir}" />
+	</target>
+</project>

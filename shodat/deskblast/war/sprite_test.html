@@ -1,0 +1,141 @@
+<html>
+<head>
+<script type="text/javascript" src="prototype.js"></script>
+<style type="text/css">
+.unselectable { -webkit-user-select: none; }
+</style>
+<script type="text/javascript">
+	
+
+var width = 1280;
+var height = 1024;
+var image = 'desk_2_quality_60.jpg';
+var details = [{'x': 0, 'y': 0, 'width': 640, 'height': 512, 'spriteX': 0, 'spriteY': 0},
+               {'x': 640, 'y': 0, 'width': 640, 'height': 512, 'spriteX': 640, 'spriteY': 0},
+			   {'x': 0, 'y': 512, 'width': 640, 'height': 512, 'spriteX': 0, 'spriteY': 512},
+			   {'x': 640, 'y': 512, 'width': 640, 'height': 512, 'spriteX': 640, 'spriteY': 512}
+               ];
+
+function buildSprites(){
+	//var el = new Element('img', {id: 'test', src: image});
+	//$('desk').insert(el);
+	
+	for(var index = 0; index < details.length; index++){
+		var el = new Element('div', {id: 'div_' + index, 
+			style: 'position: absolute; left: ' + details[index].x + 'px; top: ' + details[index].y 
+			+ 'px; width: ' + details[index].width + 'px; height: ' + details[index].height + 'px; ' 
+			+ ' background: url(' + image + ') -' 
+			+ details[index].spriteX + 'px -' + details[index].spriteY  + 'px;' });
+		
+		$('desk').insert(el);
+	}
+	
+}
+
+	function addOrUpdateTile(x, y, name){
+		var newSrc = '/scrapes?name=' + name 
+					+ '&blastId=' + credentials.blastId
+					+ '&blasterId=' + credentials.blasterInfo.id
+					+ '&key=' + credentials.key;
+		var theid = 'tile_' + x + '_' + y; 
+		if(!$(theid)){
+			// position: absolute; left: 496px; top: 120px; 
+			var thestyle = 'position: absolute; left: ' + x + 'px; top: ' + y + 'px;';
+			$('desk').insert({
+				  top: new Element('img', {id: theid, src: newSrc, style: thestyle, 'class': 'unselectable'})
+				  //top: new Element('div', {id: theid, style: thestyle, 'class': 'unselectable'})
+			});
+		}else{
+			$(theid).src = newSrc;
+		}
+	}
+	function handleMessage(message){
+		if(message.javaClass == 'com.deskblast.client.RpcChatMessage'){
+			alert(message.text);
+		}else if(message.javaClass == 'com.deskblast.client.RpcScrapingScrapeMessage'){
+			//alert(message.rpcScreenScrapeData.rects.length);
+			var i;
+			for(i = 0; i < message.rpcScreenScrapeData.rects.length; i++){
+//				console.log(message.rpcScreenScrapeData.rects[i].hash 
+//					+ " " + message.rpcScreenScrapeData.rects[i].x
+//					+ " " + message.rpcScreenScrapeData.rects[i].y);
+				addOrUpdateTile(message.rpcScreenScrapeData.rects[i].x,
+						message.rpcScreenScrapeData.rects[i].y,
+						message.rpcScreenScrapeData.rects[i].hash);
+			}
+		}		
+	}
+	function handleMessages(json){
+		var messages = json.evalJSON();
+		//alert(messages);
+		var i;
+		for(i = 0; i < messages.length; i++){
+			handleMessage(messages[i]);
+		}
+	}
+	var messageNumber = 1;
+	function getMessages(){
+		var parms = '?blastId=' + credentials.blastId + '&blasterId=' + credentials.blasterInfo.id + '&key=' + credentials.key 
+			+ '&messageNumber=' + messageNumber++ ;
+		//alert(parms);
+		new Ajax.Request(
+				'/messages' + parms,
+				{
+					method: 'get',					
+					onSuccess: function(response){
+						//alert(response);
+						//console.log(response.responseText);
+						handleMessages(response.responseText);
+						setTimeout('getMessages()',1);						
+					}
+				}
+		);
+	}
+	function join(){
+		//alert('joining...');
+		new Ajax.Request(
+			'/joinBlast',
+			{
+				postBody: Object.toJSON(credentials),
+				onSuccess: function(response){
+					alert('joined');
+					getMessages();
+				}
+			}
+		);
+	}
+	function createBlaster(owner, joiner){		 
+		new Ajax.Request(
+				'/createBlaster?ownerName=' + owner + '&joinerName=' + joiner, 
+						{
+							method: 'get', 
+							onSuccess: function(response){
+								//alert(response.responseText);
+								credentials = response.responseText.evalJSON();
+								join();
+							}
+						}
+		);		
+	}
+	Event.observe(window, 'load', function(){
+		buildSprites();
+		//alert('hi');
+		
+//		$('joinButton').observe('click', function(){
+//			//alert('clicked');
+//			createBlaster($('ownerName').getValue(), $('joinerName').getValue());			
+//		});
+	});
+
+</script>
+</head>
+<body><!-- 
+<input id="ownerName" type="text"></input>
+<input id="joinerName" type="text" value="json"></input>
+<input id="joinButton" type="button" value="Join">
+-->
+<div id="desk" style="position: absolute; width: 100%; height: 100%;">
+<!--<img id="tile_0_0" src="">-->
+</div>
+</body>
+</html>

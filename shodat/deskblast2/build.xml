@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+
+<project name="deskblast" default="all" basedir=".">
+	<property file="build.properties" />
+	<property name="src.dir" value="src" />
+	<property name="war.dir" value="war" />
+	<property name="build.dir" value="build" />
+	<property name="build.dir.www" value="${build.dir}/www" />
+
+	<path id="classpath">
+		<pathelement location="${build.dir}" />
+		<pathelement location="${src.dir}" />
+		<pathelement location="${gwt.dir}/gwt-user.jar" />
+		<pathelement location="${gwt.dir}/gwt-dev.jar" />
+		<pathelement location="${gwt.dir}/gwt-servlet.jar" />
+		<pathelement location="${gwt.dir}/gwt-servlet-deps.jar" />
+		<pathelement location="${gwt.dir}/validation-api-1.0.0.GA-sources.jar"/>
+		<pathelement location="${junit.jar}" />
+		<pathelement location="${servlet-api.jar}" />
+		<fileset dir="${war.dir}/WEB-INF/lib">
+			<include name="**/*.jar" />
+			<include name="**/*.xml" />
+		</fileset>
+	</path>
+
+	<target name="clean">
+		<delete dir="${build.dir}" />
+		<delete dir="${war.dir}/${ant.project.name}" />
+	</target>
+
+	<target name="javac" description="compile .java to .class">
+		<mkdir dir="${build.dir}" />
+		<javac destdir="${build.dir}" classpathref="classpath" debug="true">
+			<src path="${src.dir}" />
+			<!--<src path="../scrape-protocol/src" />-->
+		</javac>
+	</target>
+
+	<target name="gwtc" depends="javac" description="GWT compile to JavaScript">
+		<java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
+			<classpath>
+				<pathelement location="${src.dir}" />
+				<path refid="classpath" />
+			</classpath>
+			<jvmarg value="-Xmx256M" />
+			<!--<arg line=" -logLevel ERROR ${package}.${module}" />-->
+			<arg value="${package}.${module}" />			
+		</java>
+	</target>
+
+	<target name="copy.scrapers" description="copy applet, plugin and activex scrapers">
+		<copy file="../scraper-applet/target/shodat-1.0.jar" 
+			todir="war"/>
+		<copy file="../activex-scraper/build/shodat-signed.cab"
+			todir="war"/>
+		<copy file="../plugin-scraper/build/shodat.exe"
+			todir="war"/>
+		<copy file="../plugin-scraper/build/shodatq.exe"
+					todir="war"/>
+		<copy file="../clickonce/deploy/shod.at_installer.application"
+							todir="war"/>		
+		<property name="clickonce.root" value="Application Files"/>
+		<mkdir dir="war/${clickonce.root}"/>
+		<copy todir="war/${clickonce.root}">
+		    <fileset dir="../clickonce/deploy/Application Files"/>
+		</copy>
+	</target>
+	
+	<target name="war" depends="copy.scrapers" description="build war file">
+		<mkdir dir="${build.dir.www}" />
+		<war warfile="${build.dir.www}/${ant.project.name}.war" basedir="war">
+			<classes dir="${build.dir}" includes="**/*.class" />
+			<lib file="${gwt.dir}/gwt-servlet.jar"/>
+		</war>
+	</target>
+
+	<target name="undeploy" description="undeploys the web app. from Tomcat">
+		<delete dir="${tomcat.dir}/webapps/${ant.project.name}" />
+		<delete file="${tomcat.dir}/webapps/${ant.project.name}.war" />
+	</target>
+
+	<target name="deploy" depends="undeploy" description="deploys the war file to Tomcat">
+		<copy file="${build.dir.www}/${ant.project.name}.war" todir="${tomcat.dir}/webapps" />
+	</target>
+	
+	<target name="re-deploy" depends="war, deploy" description="re-deploys the war file to Tomcat">			
+	</target>
+	
+	<target name="all" depends="gwtc,war,deploy" description="compile and deploy"/>
+
+</project>

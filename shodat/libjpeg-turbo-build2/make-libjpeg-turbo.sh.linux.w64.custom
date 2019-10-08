@@ -1,0 +1,7 @@
+CC=/home/john/mingw64/bin/x86_64-w64-mingw32-gcc \
+    cmake -G "Unix Makefiles" -DCMAKE_SYSTEM_NAME=Windows \
+    -DCMAKE_AR=/home/john/mingw64/bin/x86_64-w64-mingw32-ar \
+    -DCMAKE_RANLIB=/home/john/mingw64/bin/x86_64-w64-mingw32-ranlib \
+    -DCMAKE_RC_COMPILER=/home/john/mingw64/bin/x86_64-w64-mingw32-windres \
+   ../libjpeg-turbo-1.2.x
+

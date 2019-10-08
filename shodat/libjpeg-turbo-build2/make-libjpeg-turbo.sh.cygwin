@@ -1,0 +1,6 @@
+export MING_DIR=
+export CC=i686-w64-mingw32-gcc.exe
+export CXX=i686-w64-mingw32-g++.exe
+cmake -G "Unix Makefiles" -DCMAKE_SYSTEM_NAME=Windows \
+-DCMAKE_AR=c:\\cygwin\\bin\\ar.exe \
+-DCMAKE_RANLIB=c:\\cygwin\\bin\\ranlib.exe ../libjpeg-turbo-1.2.x

@@ -1,0 +1,39 @@
+.appshare-background {
+	background: #444444;		
+}
+.dark-gray-background {
+	background: #444444;
+}
+.centered {
+	position: fixed;
+	top: 45%;
+	left: 45%;	
+}
+.mouse-gif {
+	opacity: .75;
+	z-index: 10;
+}
+.opacity-80 {
+	opacity: .80;
+	filter: alpha(opacity = 80);
+}
+.opacity-95 {
+	opacity: .95;
+	filter: alpha(opacity = 95);
+}
+.fixed-bottom-right {
+	position: fixed;
+	right: 1px;
+	bottom: 1px;	
+}
+.scraper-container {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 1px;
+	height: 1px;
+}
+.tile { 
+	-webkit-user-select: none;
+	-moz-user-select: none; 
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "PngFileWriter::PngFileWriter(char*, unsigned char*, unsigned int, unsigned int, unsigned char, unsigned char):PngFileWriter.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "bytes">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>

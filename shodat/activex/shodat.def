@@ -1,0 +1,9 @@
+; activex.def : Declares the module parameters.
+
+LIBRARY      "shodat.dll"
+
+EXPORTS
+	DllCanUnloadNow     PRIVATE
+	DllGetClassObject   PRIVATE
+	DllRegisterServer   PRIVATE
+	DllUnregisterServer PRIVATE

@@ -1,0 +1,18 @@
+[version]
+Signature=$CHICAGO$    
+;AdvancedINF=2.0
+
+[Add.Code]
+shodat.dll=shodat.dll
+
+[shodat.dll]
+file-win32-x86=thiscab
+clsid={CF11AE46-27B0-475D-8187-133D1D47BFA4}
+;{0xCF11AE46,0x27B0,0x475D,{0x81,0x87,0x13,0x3D,0x1D,0x47,0xBF,0xA4}}
+FileVersion=1,0,0,0
+RegisterServer=yes
+;DestDir=11
+;RedirectToHKCU=yes
+
+;[Deployment]
+;    InstallScope=user

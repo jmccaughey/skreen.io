@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+
+<project name="skreen.io" default="gzip.exe.32">
+
+	<property file="build.properties"/>
+	<property name="timestamp.parm" value="-t http://timestamp.verisign.com/scripts/timstamp.dll"/>
+	<property name="output" value="${ant.project.name}.exe"/>
+	<property name="build.dir.32"  value="build32"/>
+	<property name="build.dir.64"  value="build64"/>
+	<property name="build.dir.java"  value="buildjava"/>
+	<property name="mingw.bin.prefix.32" value="/usr/bin/i586-mingw32msvc-"/>
+	<property name="mingw.bin.prefix.64" value="/home/john/mingw64/bin/x86_64-w64-mingw32-"/>
+	<!--<property name="mingw.libs" value="/usr/bin/i586-mingw32msvc-"/>-->
+    <property name="mingw.gpp" value="g++"/>
+	<property name="boost.root" value="/home/john/boost"/>
+    <property name="jpeg.base" value="../libjpeg-turbo" />
+    <property name="jpeg.include" value="${jpeg.base}/libjpeg-turbo-1.2.x" />
+    <property name="jpeg.include.config.32" value="${jpeg.base}/build-win32" />
+    <property name="jpeg.include.config.64" value="${jpeg.base}/build-win64" />
+	<property name="jpeg.lib.32" value="${jpeg.base}/build-win32/libjpeg.a" />
+	<property name="jpeg.lib.64" value="${jpeg.base}/build-win64/libjpeg.a" />
+	<property name="osslsigncode.dir" value=""/>
+	<property name="osslsigncode" value="osslsigncode"/>
+	<property name="common" value="../windows-scrapers-common2"/>
+	<property name="signing.root" value="../signing2/2016"/>
+	<property name="signing.file" value="wh2016"/>
+	<property name="signing.file.path" value="${signing.root}/${signing.file}"/>
+	<property name="clsid.string" value="{CF11AE46-27B0-475D-8187-133D1D47BFA4}"/>
+	<property name="clsid.c" value="{0xCF11AE46,0x27B0,0x475D,{0x81,0x87,0x13,0x3D,0x1D,0x47,0xBF,0xA4}}"/>
+	<property name="company.name" value="WebHuddle, Inc."/>
+	<property name="cab.task.root" value="${build.dir.java}/cab-task"/>	
+	<property name="optimization.level" value="3"/>
+	
+	<!-- http://lwn.net/Articles/387122/ -->
+	<property name="link.time.optimization" value="-flto"/>
+
+	<target name="init">
+		<mkdir dir="${build.dir.32}"/>
+		<mkdir dir="${build.dir.64}"/>
+		<mkdir dir="${build.dir.java}"/>
+	</target>
+	<target name="compile.resource.32" depends="init">
+		<exec executable="${mingw.bin.prefix.32}windres" failonerror="true">
+			<arg line=" 
+			-o ${build.dir.32}/${ant.project.name}.o ../activex/${ant.project.name}.rc 
+			"/>
+		</exec>
+	</target>
+	<target name="compile.resource.64" depends="init">
+		<echo>${mingw.bin.prefix.64}windres</echo>
+        <exec executable="${mingw.bin.prefix.64}windres" failonerror="true">
+            <arg line=" 
+            -o ${build.dir.64}/${ant.project.name}.o ${ant.project.name}.rc 
+            "/>
+        </exec>
+    </target>
+	<target name="get.cab.task.source">
+		<property name="cab.task.package.path" value="com/sts/webmeet/build/cabtask"/>
+		<property name="cab.task.files.dir" value="${cab.task.root}/${cab.task.package.path}"/>
+		<property name="http.root" value="http://webhuddle.cvs.sourceforge.net/viewvc/*checkout*/webhuddle/webhuddle/src/java/com/sts/webmeet/build/cabtask"/>
+		<mkdir dir="${cab.task.files.dir}"/>	
+		<copy todir="${cab.task.files.dir}" flatten="true">
+			<url url="${http.root}/CabEntry.java"/> 
+			<url url="${http.root}/CabOutputStream.java"/>
+			<url url="${http.root}/CabTask.java"/>
+			<url url="${http.root}/DosDateUtil.java"/>
+		</copy>
+	</target>
+	<target name="compile.cab.task" depends="get.cab.task.source">
+		<javac srcdir="${cab.task.root}"/> 	
+	</target>	
+	<target name="token.javac">
+		<javac srcdir="."/>
+	</target>
+	<target name="build.exe.32" depends="compile.resource.32">
+        <echo>${jpeg.include.config.32}</echo>
+	    <exec executable="${mingw.bin.prefix.32}${mingw.gpp}" failonerror="true">			
+			<arg line=" -fno-exceptions -mwindows -O${optimization.level} ${build.dir.32}/${ant.project.name}.o ${common}/Trace.cpp ${common}/Region.cpp ${common}/HashString.cpp ${common}/SubtileInfo.cpp ${common}/ScraperPosterMetaData.cpp ../GifEncoder2/gifencode.c ../GifEncoder2/GifSpriter.cpp ${common}/Poster.cpp ${common}/Win32ScraperPoster.cpp ../jpeg_integration2/jpeg_mem_dest.cpp ../md5/md5.cpp json_parser.cpp main.cpp -o ${build.dir.32}/${output} ${jpeg.lib.32} -static-libstdc++ -static-libgcc -lwininet -lgdi32 -lws2_32 -luuid -lole32 -loleaut32 -L${mingw.libs} -L${mingw.libs}//w32api           -Iplatforms/windows/latency     -I../md5 -I${jpeg.include.config.32} -I${jpeg.include} -I${common}  -I../jpeg_integration2 -DWIN32 -D_WINDOWS -D_X86_ -D_WIN32" />
+		</exec>
+	</target>
+    <target name="build.dll.64" depends="compile.resource.64">
+    	<echo>${mingw.bin.prefix.64}${mingw.gpp}</echo>
+    	<echo>${jpeg.lib.64}</echo>
+        <exec executable="${mingw.bin.prefix.64}${mingw.gpp}" failonerror="true">
+            <!--<arg line=" -mwindows -enable-stdcall-fixup -O2 -shared                                                            ${ant.project.name}.def ${build.dir.64}/${ant.project.name}.o ${common}/Trace.cpp ${common}/Region.cpp GuidUtil.cpp ${common}/HashString.cpp ${common}/SubtileInfo.cpp ${common}/ScraperPosterMetaData.cpp ../GifEncoder2/gifencode.c ../GifEncoder2/GifSpriter.cpp ${common}/Poster.cpp ${common}/Win32ScraperPoster.cpp ../jpeg_integration2/jpeg_mem_dest.cpp ../md5/md5.cpp IEEntry.cpp Registry.cpp -o ${build.dir.64}/${output} ${jpeg.lib} -static-libstdc++ -static-libgcc -lwininet -lgdi32 -lws2_32 -luuid -lole32 -loleaut32 -L${mingw.libs} -L${mingw.libs}//w32api -I${jpeg.base} -I../md5 -I${common} -I${boost.root} -I../jpeg_integration2 -DWIN32 -D_WINDOWS -D_X86_ -D_USRDLL -DBASIC_EXPORTS" />-->
+            <arg line=" -shared -fno-exceptions ${link.time.optimization} -Wl,--enable-stdcall-fixup,--kill-at -O${optimization.level} ${ant.project.name}.def ${build.dir.64}/${ant.project.name}.o ${common}/Trace.cpp ${common}/Region.cpp GuidUtil.cpp ${common}/HashString.cpp ${common}/SubtileInfo.cpp ${common}/ScraperPosterMetaData.cpp ../GifEncoder2/gifencode.c ../GifEncoder2/GifSpriter.cpp ${common}/Poster.cpp ${common}/Win32ScraperPoster.cpp ../jpeg_integration2/jpeg_mem_dest.cpp ../md5/md5.cpp IEEntry.cpp Registry.cpp -o ${build.dir.64}/${output} ${jpeg.lib.64} -static-libstdc++ -static-libgcc -lwininet -lgdi32 -lws2_32 -luuid -lole32 -loleaut32 -L${mingw.libs} -L${mingw.libs}//w32api                -I../md5 -I${jpeg.include} -I${jpeg.include.config.64} -I${common}  -I../jpeg_integration2 -DWIN32 -D_WINDOWS -D_USRDLL -DBASIC_EXPORTS -D_WIN32" />
+        </exec>
+    </target>
+
+    <target name="strip.32" depends="build.exe.32">
+        <echo>stripping binary ${build.dir.32}/${output} using ${mingw.bin.prefix.32}strip</echo>
+        <exec
+            executable="${mingw.bin.prefix.32}strip" 
+            failonerror="true">
+            <arg line="${build.dir.32}/${output}"/>
+        </exec>
+    </target>
+<!--
+	<target name="strip.64" depends="build.dll.64">
+		<echo>stripping binary...</echo>
+		<exec
+			executable="${mingw.bin.prefix.64}strip" 
+			failonerror="true">
+			<arg line="${build.dir.64}/${output}"/>
+		</exec>
+	</target>
+-->	
+	<target name="sign.exe.32" depends="strip.32">
+	            <move file="${build.dir.32}/${output}" tofile="${build.dir.32}/${output}-unsigned"/>
+	    		<echo>${osslsigncode}</echo>
+	            <exec executable="${osslsigncode}" failonerror="true">
+	                    <arg line=" -pkcs12 ${signing.file.path}.pfx -pass password -n shodat -i http://shod.at -in ${build.dir.32}/${output}-unsigned -out ${build.dir.32}/${output} ${timestamp.parm}"/>
+	            </exec>
+	</target>
+	<target name="gzip.exe.32" depends="sign.exe.32">         
+				<gzip src="${build.dir.32}/${output}" destfile="${build.dir.32}/${output}.gz"/>		
+	</target>
+
+<!--	
+	<target name="sign.dll.64" depends="strip.64">
+                <move file="${build.dir.64}/${output}" tofile="${build.dir.64}/${output}-unsigned"/>
+                <echo>${osslsigncode}</echo>
+                <exec executable="${osslsigncode}" failonerror="true">
+                        <arg line=" -pkcs12 ${signing.file.path}.pfx -pass password -n shodat -i http://shod.at -in ${build.dir.64}/${output}-unsigned -out ${build.dir.64}/${output} ${timestamp.parm}"/>
+                </exec>
+    </target>	
+	<target name="package.cab.32" depends="sign.dll.32,compile.cab.task">
+		<taskdef 
+       	     name="cabtask"
+       	     classname="com.sts.webmeet.build.cabtask.CabTask"
+       	     classpath="${cab.task.root}"
+       		 /> 
+		<cabtask destfile="${build.dir.32}/${ant.project.name}.cab"> 
+			<fileset dir="${build.dir.32}"> 
+				<include name="${output}"/> 
+			</fileset> 
+			<fileset file="${ant.project.name}.inf"/>
+		</cabtask> 
+	</target> 
+	<target name="sign.cab.32" depends="package.cab.32">
+		<exec executable="${osslsigncode}" failonerror="true">
+			<arg line=" -pkcs12 ${signing.file.path}.pfx -pass password -n shodat -i http://shod.at -in ${build.dir.32}/${ant.project.name}.cab -out ${build.dir.32}/${ant.project.name}-signed.cab ${timestamp.parm}"/>
+		</exec>	
+	</target>
+	<target name="package.cab.64" depends="sign.dll.64,compile.cab.task">
+        <taskdef 
+             name="cabtask"
+             classname="com.sts.webmeet.build.cabtask.CabTask"
+             classpath="${cab.task.root}"
+             /> 
+        <cabtask destfile="${build.dir.64}/${ant.project.name}.cab"> 
+            <fileset dir="${build.dir.64}"> 
+                <include name="${output}"/> 
+            </fileset> 
+            <fileset file="${ant.project.name}.inf"/>
+        </cabtask> 
+    </target> 
+    <target name="sign.cab.64" depends="package.cab.64">
+        <exec executable="${osslsigncode}" failonerror="true">
+            <arg line=" -pkcs12 ${signing.file.path}.pfx -pass password -n shodat -i http://shod.at -in ${build.dir.64}/${ant.project.name}.cab -out ${build.dir.64}/${ant.project.name}-signed.cab ${timestamp.parm}"/>
+        </exec> 
+    </target>
+-->
+	<target name="clean">
+		<delete dir="${build.dir.32}"/>
+		<delete dir="${build.dir.64}"/>
+		<delete dir="${build.dir.java}"/>
+	</target>
+</project>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+        <head>
+                <title>Chrome &lt;img&gt; Tag Leak</title>
+                <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+                <script type="text/javascript">
+                        $(function() {
+                                var img = $('#loader');
+                                var div = $('#target');
+                                var interval = 30;
+                                var imgName = ['leak.png', 'leak2.png'];
+                                var imgIndex = 0;
+                                var timer;
+
+                                function timerCallback() {
+                                        img[0].src = imgName[imgIndex] + '?v=' + new Date().getTime();
+                                        if(++imgIndex == 2) {
+                                                imgIndex = 0;
+                                        }
+                                }
+
+                                function loadCallback() {
+                                        div[0].style.backgroundImage = "url('" + img[0].src + "')";
+                                        timer = setTimeout(timerCallback, interval);
+                                }
+
+                                function fixTimeout() {
+                                        // Restore image loading loop in case an img load fails
+                                        cancelTimeout(timer);
+                                        timer = setTimeout(timerCallback, interval);
+                                }
+
+                                function setLoader() {
+                                        img.load(loadCallback);
+                                        timerCallback();
+                                        setTimeout(fixTimeout(), 2000);
+                                }
+
+                                setLoader();
+                        });
+                </script>
+                <style type="text/css">
+                        html {
+                                text-align: center;
+                        }
+                        #target {
+                                background-image: url('leak.png');
+                                background-position: center;
+                                background-repeat: no-repeat;
+                                width: 640px;
+                                height: 480px;
+                        }
+                        #loader {
+                                display: none;
+                        }
+                </style>
+        </head>
+        <body>
+                <div id="target"></div>
+                <img id="loader">
+        </body>
+</html>

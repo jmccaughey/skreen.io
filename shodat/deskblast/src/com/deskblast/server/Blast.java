@@ -1,0 +1,430 @@
+package com.deskblast.server;
+
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.apache.commons.logging.Log;
+
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Element;
+import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
+
+import com.deskblast.client.Deskblast;
+import com.deskblast.client.RpcAbstractTileInfo;
+import com.deskblast.client.RpcAbstractTileInfoSprite;
+import com.deskblast.client.RpcBackReferenceScreenScrape;
+import com.deskblast.client.RpcBackReferenceScreenScrapeSprite;
+import com.deskblast.client.RpcBlasterCredentials;
+import com.deskblast.client.RpcBlasterInfo;
+import com.deskblast.client.RpcChatMessage;
+import com.deskblast.client.RpcCompressedScreenScrape;
+import com.deskblast.client.RpcCompressedScreenScrapeSprite;
+import com.deskblast.client.RpcMessage;
+import com.deskblast.client.RpcRosterMessage;
+import com.deskblast.client.RpcScrapeMessage;
+import com.deskblast.client.RpcScrapingScrapeMessage;
+import com.deskblast.client.RpcScreenScrapeData;
+import com.deskblast.client.RpcScreenScrapeMetaData;
+import com.deskblast.client.RpcStartScrapingMessage;
+import com.deskblast.client.RpcStopScrapingMessage;
+import com.deskblast.scrape.protocol.AbstractTileInfo;
+import com.deskblast.scrape.protocol.BackReferenceScreenScrape;
+import com.deskblast.scrape.protocol.CompressedScreenScrape;
+import com.deskblast.scrape.protocol.ScreenScrapeDataChunk;
+import com.deskblast.server.json.NumberWrappedBlastMessage;
+
+public class Blast implements BlastContext {
+
+    private Map<String, ContentHandler> contentHandlers = Collections
+            .synchronizedMap(new HashMap<String, ContentHandler>());
+
+    private int blastId;
+    private RpcBlasterCredentials ownerCredentials;
+    private Map<Integer, BlasterConnection> blasters = Collections
+            .synchronizedMap(new HashMap<Integer, BlasterConnection>());
+    private Cache imageCache;
+    private RpcBlasterCredentials blastingUser;
+    private RpcBlasterInfo[] roster;
+
+    //private ChunkState chunkState = new ChunkState();
+    private ScreenScrapeDataChunk ssdcLast;
+    private Integer currentSequence;
+    private RpcScrapeStreamHandler rpcScrapeStreamHandler = new RpcScrapeStreamHandlerImpl();
+    
+//    private int currentSequence = -1;
+//    private int expectedChunks = -1;
+    private List<ScreenScrapeDataChunk> chunks = Collections.synchronizedList(new ArrayList<ScreenScrapeDataChunk>());
+    
+    private static Logger logger = Logger.getLogger(Blast.class + "");
+
+//    private List<PartialScrapeData> pendingScrapes = Collections
+//    	.synchronizedList(new ArrayList<PartialScrapeData>());
+    
+    public Blast(RpcBlasterCredentials owner) {
+        this.ownerCredentials = owner;
+        blastId = owner.getBlastId();
+        addBlaster(owner);
+        ContentHandler chat = new ChatContentHandler();
+        contentHandlers.put(chat.getName(), chat);
+        ContentHandler scrape = new ScrapeContentHandler();
+        contentHandlers.put(scrape.getName(), scrape);
+        imageCache = new Cache(blastId+"", 100, MemoryStoreEvictionPolicy.FIFO,
+                true, "", true, 0, 0, false, 0, null);
+        CacheManager.getInstance().addCache(imageCache);
+    }
+
+    public int getId() {
+        return this.blastId;
+    }
+
+    public void handleRpcMessage(RpcMessage rpcMessage, String key) {
+        System.out.println("got message: " + rpcMessage);
+        BlasterConnection blasterConnection = blasters.get(rpcMessage
+                .getSender().getId());
+        ContentHandler handler = null;
+        if (blasterConnection.keyMatches(key)) {
+        	if(rpcMessage instanceof RpcChatMessage){
+        		handler = findHandler("chat");
+        	}else if(rpcMessage instanceof RpcScrapeMessage){
+        		handler = findHandler("scrape");
+        	}
+            handler.handleContent(rpcMessage, this);
+        } else {
+            System.out.println("incorrect key!");
+        }
+    }
+//    private synchronized void updateChunkStateFromLast(ScreenScrapeDataChunk ssdc){
+//    	chunkState.setTotalChunks(ssdc.getTotalSequenceItems());
+//    	chunkState.setKeyFrame(ssdc.isKeyFrame());
+//    	chunkState.setHeight(ssdc.getRectArea().height);
+//    	chunkState.setWidth(ssdc.getRectArea().width);
+//    	chunkState.setMouseX(ssdc.getMousePosition().x);
+//    	chunkState.setMouseY(ssdc.getMousePosition().y);
+//    }
+    public ContinueInfo handleScreenScrapeChunk(DataInputStream dataInputStream,//ScreenScrapeData screenScrapeData,
+     		int senderId, String key) throws IOException {
+    	final BlasterConnection blasterConnection = blasters.get(senderId);
+        if (!blasterConnection.keyMatches(key)){
+            System.out.println("incorrect key!");
+            return new ContinueInfo(false, false);
+        }
+    	ScreenScrapeDataChunk ssdc = new ScreenScrapeDataChunk(dataInputStream);
+    	logger.info(ssdc.toString());
+    	handleNewChunk(ssdc, blasterConnection);
+        return new ContinueInfo(blasterConnection.getShouldContinueScraping(),
+        		blasterConnection.getAndResetKeyframeRequested());
+    }
+    private synchronized void handleNewChunk(ScreenScrapeDataChunk ssdc, BlasterConnection blasterConnection){
+    	if(this.currentSequence == null){
+    		this.currentSequence = new Integer(ssdc.getSequence());
+    	}else if(ssdc.getSequence() != this.currentSequence){
+    		throw new RuntimeException("unexpected chunk sequence. was " 
+    				+ this.currentSequence + " got " + ssdc.getSequence());
+    	}
+    	this.chunks.add(ssdc);
+    	if(ssdc.isLastChunk()){
+    		System.out.println("got last chunk: " + this.currentSequence);
+    		assert(this.ssdcLast == null);
+    		this.ssdcLast = ssdc;
+    	}
+    	if(this.ssdcLast != null 
+    			&& (this.chunks.size() == this.ssdcLast.getTotalSequenceItems()
+    					|| this.ssdcLast.getTotalSequenceItems() == 0)){
+    		// all chunks received
+    		rpcScrapeStreamHandler.handleScrape(blasterConnection.getBlasterInfo(), new RpcScreenScrapeMetaData(
+					buildSpriteArray(), 
+					this.ssdcLast.getRectArea().width, this.ssdcLast.getRectArea().height, 
+					this.ssdcLast.getMousePosition().x, this.ssdcLast.getMousePosition().y, 
+					this.ssdcLast.isKeyFrame())
+    		);
+    		resetChunkState();
+    	}
+    }
+    private RpcAbstractTileInfoSprite[] buildSpriteArray(){
+    	List<RpcAbstractTileInfoSprite> pendingQueue = new LinkedList<RpcAbstractTileInfoSprite>();
+    	for(ScreenScrapeDataChunk chunk : chunks){
+    		for(AbstractTileInfo ati : chunk.getRects()){
+    			if(ati instanceof BackReferenceScreenScrape){
+    				pendingQueue.add(new RpcBackReferenceScreenScrapeSprite(ati.x, ati.y, 
+    						ati.width, ati.height, ati.getHash(), ati.spriteX, ati.spriteY));
+    			}else{
+    				CompressedScreenScrape css = (CompressedScreenScrape)ati;
+    				pendingQueue.add(new RpcCompressedScreenScrapeSprite(css.getBytes(), ati.x, ati.y, 
+    						ati.width, ati.height, ati.getHash(), ati.spriteX, ati.spriteY));
+    			}
+    		}
+    	}
+    	return pendingQueue.toArray(new RpcAbstractTileInfoSprite[0]);
+    }
+    public ContinueInfo handleScreenScrape(DataInputStream dataInputStream,//ScreenScrapeData screenScrapeData,
+            int senderId, String key) {
+        final BlasterConnection blasterConnection = blasters.get(senderId);
+        // TODO: assert that this blaster can/is sharing (is moderator)
+        if (blasterConnection.keyMatches(key)) {
+        	// stream scrapes: send each tile as a BlastMessage
+        	// meta message has region dimensions
+			try {
+				ScrapeStreamReader.readStream(blasterConnection.getBlasterInfo(), dataInputStream, rpcScrapeStreamHandler);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+            return new ContinueInfo(blasterConnection.getShouldContinueScraping(),
+            		blasterConnection.getAndResetKeyframeRequested());
+        } else {
+            System.out.println("incorrect key!");
+            return new ContinueInfo(false, false);
+        }
+    }
+    public RpcBlasterInfo getOwnerInfo() {
+        return this.ownerCredentials.getRpcBlasterInfo();
+    }
+    
+    public RpcBlasterCredentials getOwnerCredentials(){
+    	return this.ownerCredentials;
+    }
+
+    private ContentHandler findHandler(String className) {
+        if (className.toLowerCase().indexOf("chat") > -1) {
+            return contentHandlers.get("chat");
+        } else {
+            return contentHandlers.get("scrape");
+        }
+    }
+
+    public NumberWrappedBlastMessage[] getMessages(int blasterId, String key,
+            int messageNumber) throws InterruptedException {
+        if(rosterChanged()){
+            sendRosterMessage();
+        }
+        return blasters.get(blasterId).dequeueMessages(key, messageNumber);
+    }
+	public RpcMessage[] getRpcMessages(int blasterId, String key) {
+		return blasters.get(blasterId).dequeueRpcMessages(key);
+	}
+	synchronized void addBlaster(RpcBlasterCredentials rpcBlasterInfo) {
+    	System.out.println("adding blaster");
+        blasters.put(rpcBlasterInfo.getRpcBlasterInfo().getId(),
+                new BlasterConnection(rpcBlasterInfo));
+        sendRosterMessage();
+        this.setKeyframeRequested();
+    }
+//    
+//    public void sendToAll(BlastMessage blastMessage) {
+//        for (BlasterConnection blaster : blasters.values()) {
+//            try {
+//                blaster.queueMessage(blastMessage);
+//            } catch (QueueFullException e) {
+//                System.out.println("queue full: "
+//                        + blaster.getBlasterInfo().getName());
+//                handleConnectionProblem(blaster);
+//            }
+//        }
+//    }
+    private void handleConnectionProblem(BlasterConnection blaster) {
+        // show blaster as disconnected in roster
+        // TODO
+    }
+//    public void sendToAllButSelf(BlastMessage blastMessage) {
+//        for (BlasterConnection blaster : blasters.values()) {
+//            if (!blaster.getId().equals(blastMessage.getSender().getId())) {
+//                try {
+//                    blaster.queueMessage(blastMessage);
+//                } catch (QueueFullException e) {
+//                    System.out.println(e.getMessage());
+//                    handleConnectionProblem(blaster);
+//                }
+//            }
+//        }
+//    }
+    private void sendRosterMessage() {
+        this.roster = buildRoster();
+        RpcRosterMessage rosterMessage = new RpcRosterMessage(this.roster);
+        sendRpcToAll(rosterMessage);
+        System.out.println("sent roster: " + this.roster.length);
+    }
+    private RpcBlasterInfo[] buildRoster(){
+        Collection<BlasterConnection> blasters = this.blasters.values();
+        List<RpcBlasterInfo> roster = new ArrayList<RpcBlasterInfo>();
+        //System.out.println("raw roster size: " + blasters.size());
+        for (BlasterConnection bc : blasters) {
+            if(bc.isConnected()){
+                roster.add(bc.getBlasterInfo());
+            }
+        }
+        return roster.toArray(new RpcBlasterInfo[0]);
+    }
+    private boolean rosterChanged(){
+        //System.out.println("in roster changed");
+        RpcBlasterInfo[] currentRoster = buildRoster();
+        if(currentRoster.length != this.roster.length){
+        	System.out.println("roster changed");
+            return true;
+        }
+        for(int i = 0; i < currentRoster.length; i++){
+            if( ! currentRoster[i].equals(this.roster[i])){
+            	System.out.println("roster changed");
+                return true;
+            }
+        }
+        return false;
+    }
+    /*
+    public void addScrapesToCache(ScreenScrapeData screenScrapeData) {
+        AbstractTileInfo[] tiles = screenScrapeData.getCompressedRects();
+        for (int i = 0; i < tiles.length; i++) {
+            if (tiles[i] instanceof CompressedScreenScrape) {
+                this.imageCache.put(new Element(
+                        tiles[i].getHash(),
+                        ((CompressedScreenScrape) tiles[i]).getBytes())
+                );
+            }
+        }
+    }*/
+    // TODO: is ehcache thread safe? if so no need for sync
+    public synchronized byte[] getScrapeFromCache(String name, int blasterId, String key) {
+        BlasterConnection blasterConnection = this.blasters.get(blasterId);
+        if(blasterConnection.keyMatches(key)){
+        	Element e = this.imageCache.get(name);
+        	if(null == e){
+        		String message = name + " expected in cache but not found";
+        		logger.log(Level.SEVERE, message);
+        		throw new RuntimeException(message);
+        	}else{
+        		byte[] scrape = (byte[])e.getObjectValue();
+        		return scrape;
+        	}
+        }else{
+            throw new RuntimeException("key did not match: " + key);
+        }
+    }
+    public void setShouldContinueScraping(boolean continueScraping,
+            int blasterId) {
+    	System.out.println("setting shouldContinueScraping: " + continueScraping);
+        BlasterConnection blasterConnection = this.blasters.get(blasterId);
+        blasterConnection.setShouldContinueScraping(continueScraping);
+        if(continueScraping){
+        	this.blastingUser = blasterConnection.getBlasterCredentials();
+        }else{
+        	this.blastingUser = null;
+        }
+    }
+    public void setKeyframeRequested(){    	
+    	System.out.println("setting keyframe requested");
+    	if(this.blastingUser != null){
+    		System.out.println("setting keyframe requested on blaster");
+    		this.blasters.get(this.blastingUser.getRpcBlasterInfo().getId())
+    			.setKeyframeRequested();
+    	}
+    }
+	public boolean getShouldContinueScraping(int blasterId) {
+		BlasterConnection blasterConnection = this.blasters.get(blasterId);
+		if(blasterConnection != null){
+			return blasterConnection.getShouldContinueScraping();
+		}
+		return false;
+	}
+	public void handleScreenScrapingStopped(int blasterId, String key) {
+		if(blasters.get(blasterId).keyMatches(key) && this.blastingUser != null 
+				&& this.blastingUser.getRpcBlasterInfo().getId() == blasterId){
+			RpcStopScrapingMessage ssm = new RpcStopScrapingMessage();
+			ssm.setSender(blasters.get(blasterId).getBlasterInfo());
+			this.sendRpcToAll(ssm);
+		}else{
+			throw new RuntimeException("key did not match: " + key);
+		}
+	}
+/*	
+	public ContinueInfo handlePartialScreenScrape(
+			PartialScrapeData partialScrape, Long blasterId, String key) {
+		this.pendingScrapes.add(partialScrape);
+		if(partialScrape.isLastScrape()){
+			ScreenScrapeData screenScrapeData = new ScreenScrapeData(
+					this.pendingScrapes.toArray(new PartialScrapeData[0]));
+			return handleScreenScrape(screenScrapeData, blasterId, key);
+		}
+		return new ContinueInfo(true, false);
+	}
+*/	
+	public void handlePluginInstalledStartScraping(int blasterId, String key){
+		if(blasters.get(blasterId).keyMatches(key) 
+				&& this.blastingUser == null 
+				//&& this.blastingUser.getBlasterInfo().getId().equals(blasterId)
+				){
+			RpcStartScrapingMessage ssm = new RpcStartScrapingMessage();
+			ssm.setSender(blasters.get(blasterId).getBlasterInfo());
+			handleRpcMessage(ssm, key);
+			//this.sendToAll(ssm);
+		}else{
+			throw new RuntimeException("key did not match: " + key);
+		}
+	}
+
+	@Override
+	public void sendRpcToAll(RpcMessage rpcMessage) {
+        for (BlasterConnection blaster : blasters.values()) {
+            try {
+                blaster.queueRpcMessage(rpcMessage);
+            } catch (QueueFullException e) {
+                System.out.println("queue full: "
+                        + blaster.getBlasterInfo().getName());
+                handleConnectionProblem(blaster);
+            }
+        }
+	}
+	@Override
+	public synchronized void addScrapesToCache(RpcScreenScrapeData rpcScreenScrapeData) {
+	    // TODO: is ehcache thread safe? if so no need for sync
+		RpcAbstractTileInfoSprite[] tiles = rpcScreenScrapeData.getRects();
+        for (int i = 0; i < tiles.length; i++) {
+            if (tiles[i] instanceof RpcCompressedScreenScrapeSprite) {
+                this.imageCache.put(new Element( tiles[i].getHash(), ((RpcCompressedScreenScrapeSprite)tiles[i]).bytes));                
+                logger.log(Level.INFO, tiles[i].getHash() + " added.");
+            }
+        }
+	}
+
+	@Override
+	public void sendRpcToAllButSelf(RpcMessage rpcMessage) {
+		// assumption: array of messages will have consistent
+		// sender
+		int senderId = rpcMessage.getSender().getId();
+        for (BlasterConnection blaster : blasters.values()) {
+            if (blaster.getId() != senderId){
+                try {
+                    blaster.queueRpcMessage(rpcMessage);
+                } catch (QueueFullException e) {
+                    System.out.println("queue full exception: " + e.getMessage());
+                    handleConnectionProblem(blaster);
+                }
+            }
+        }
+	}
+	@Override
+	public void resetChunkState() {
+		System.out.println("resetting chunk state");
+		chunks.clear();
+		this.ssdcLast = null;
+		this.currentSequence = null;
+	}
+	class RpcScrapeStreamHandlerImpl implements RpcScrapeStreamHandler{
+		@Override
+		public void handleScrape(RpcBlasterInfo rpcBlasterInfo, RpcScreenScrapeData rpcScreenScrapeData) {
+            RpcMessage rpcMessage = new RpcScrapingScrapeMessage(
+                    rpcScreenScrapeData);
+            rpcMessage.setSender(rpcBlasterInfo);
+            ContentHandler contentHandler = findHandler("scrape");
+            contentHandler.handleContent(rpcMessage, Blast.this);
+		}
+	}
+}

@@ -1,0 +1,4 @@
+# Module deskblast
+# RPC service class, partial path of RPC policy file
+com.deskblast.client.ClientBoundMessageService, FD98BDFDA9FFC97E0A607004DE5FD3DA.gwt.rpc
+com.google.gwt.logging.shared.RemoteLoggingService, D024F1C46A1C4B4286C62BD6CB8FA83E.gwt.rpc

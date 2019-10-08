@@ -1,0 +1,7 @@
+export MING_DIR=/usr/bin
+export CC=/usr/bin/i586-mingw32msvc-gcc
+export CXX=/usr/bin/i586-mingw32msvc-g++
+cmake -G "Unix Makefiles" -DCMAKE_SYSTEM_NAME=Windows \
+-DCMAKE_AR=${MING_DIR}/i586-mingw32msvc-ar \
+-DCMAKE_RC_COMPILER=/usr/bin/i586-mingw32msvc-windres \
+-DCMAKE_RANLIB=${MING_DIR}/i586-mingw32msvc-ranlib ../libjpeg-turbo-1.2.x

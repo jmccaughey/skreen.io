@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<project name="boost" default="compile">
+
+	<property name="mingw.bin.prefix" value="/usr/bin/i586-mingw32msvc-"/>
+	<!--<property name="mingw.libs" value="/usr/bin/i586-mingw32msvc-"/>-->
+    <property name="mingw.gpp" value="g++"/>
+
+	
+	<target name="compile" >
+		<exec executable="${mingw.bin.prefix}${mingw.gpp}" failonerror="true">
+			<arg line=" -mwindows -enable-stdcall-fixup -O2 -shared ${ant.project.name}.def ${build.dir}/${ant.project.name}.o ${common}/Trace.cpp ${common}/Region.cpp GuidUtil.cpp ${common}/ScraperPosterMetaData.cpp ${common}/Poster.cpp ../jpeg_integration2/jpeg_mem_dest.cpp ../GifEncoder2/gifencode.c ../GifEncoder2/GifEncoder2.cpp ../md5/md5.cpp ${common}/Win32ScraperPoster.cpp IEEntry.cpp Registry.cpp -o ${build.dir}/${output} -L${mingw.libs} -static-libstdc++ -static-libgcc ${jpeg.lib} -lole32 -loleaut32 -L${mingw.libs}//w32api -luuid -lwininet -lgdi32 -lws2_32 -I${jpeg.base} -I../md5 -I${common} -I../jpeg_integration2 -DWIN32 -D_WINDOWS -D_X86_ -D_USRDLL -DBASIC_EXPORTS" />
+		</exec>
+	</target>
+	
+</project>

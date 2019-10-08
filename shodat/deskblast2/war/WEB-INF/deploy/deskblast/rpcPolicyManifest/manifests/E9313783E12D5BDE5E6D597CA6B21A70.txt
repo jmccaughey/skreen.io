@@ -1,0 +1,2 @@
+serviceClass: com.deskblast.client.ClientBoundMessageService
+path: FD98BDFDA9FFC97E0A607004DE5FD3DA.gwt.rpc

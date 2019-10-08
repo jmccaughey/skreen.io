@@ -1,0 +1,44 @@
+dependencies: \
+  /Users/jmccaughey/myrepo/randd/RoundTransparentWindow/Classes/Controller.mm \
+  /Users/jmccaughey/myrepo/randd/RoundTransparentWindow/Classes/Controller.h \
+  ../../shodat/windows-scrapers-common2/MacScraperPoster.h \
+  ../../shodat/windows-scrapers-common2/Region.h \
+  ../../randd/CurlPoster.h \
+  ../../shodat/windows-scrapers-common2/platforms/mac/timer/PlatformTimer.h \
+  ../../shodat/windows-scrapers-common2/ScraperPosterMetaData.h \
+  ../../shodat/windows-scrapers-common2/resource.h \
+  ../../shodat/windows-scrapers-common2/HashString.h \
+  ../../shodat/windows-scrapers-common2/SubtileInfo.h \
+  ../../shodat/windows-scrapers-common2/../GifEncoder2/GifSpriter.h \
+  ../../shodat/windows-scrapers-common2/../GifEncoder2/GifSpriteInfo.h \
+  ../../shodat/windows-scrapers-common2/../GifEncoder2/../windows-scrapers-common2/MappedRegion.h \
+  ../../shodat/windows-scrapers-common2/platforms/mac/screen/10_6_AND_HIGHER/PlatformScreenNoCopy.h \
+  /usr/local/include/libavutil/mathematics.h \
+  /usr/local/include/libavutil/attributes.h \
+  /usr/local/include/libavutil/rational.h \
+  /usr/local/include/libavutil/intfloat.h \
+  /usr/local/include/libavformat/avformat.h \
+  /usr/local/include/libavcodec/avcodec.h \
+  /usr/local/include/libavutil/samplefmt.h \
+  /usr/local/include/libavutil/avutil.h \
+  /usr/local/include/libavutil/error.h \
+  /usr/local/include/libavutil/version.h \
+  /usr/local/include/libavutil/buffer.h \
+  /usr/local/include/libavutil/cpu.h /usr/local/include/libavutil/dict.h \
+  /usr/local/include/libavutil/frame.h \
+  /usr/local/include/libavcodec/version.h \
+  /usr/local/include/libavutil/log.h \
+  /usr/local/include/libavutil/pixfmt.h \
+  /usr/local/include/libavutil/avconfig.h \
+  /usr/local/include/libavutil/old_pix_fmts.h \
+  /usr/local/include/libavutil/mem.h \
+  /usr/local/include/libavformat/avio.h \
+  /usr/local/include/libavutil/common.h \
+  /usr/local/include/libavformat/version.h \
+  /usr/local/include/libswscale/swscale.h \
+  /usr/local/include/libswscale/version.h \
+  ../../randd/SwscaleTest/Scaler.h \
+  ../../shodat/windows-scrapers-common2/json_parser.h \
+  /opt/libjpeg-turbo/include/jpeglib.h \
+  /opt/libjpeg-turbo/include/jconfig.h \
+  /opt/libjpeg-turbo/include/jmorecfg.h

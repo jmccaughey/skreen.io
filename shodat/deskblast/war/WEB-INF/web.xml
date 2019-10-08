@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+	<!-- Default page to serve -->
+	<welcome-file-list>
+		<welcome-file>index2.html</welcome-file>
+	</welcome-file-list>
+
+	<!-- Servlets -->
+
+	<listener>
+		<listener-class>com.deskblast.server.MyGuiceContextListener</listener-class>
+	</listener>
+
+	<listener>
+		<listener-class>com.deskblast.server.ContextListener</listener-class>
+	</listener>
+
+	<filter>
+		<filter-name>guiceFilter</filter-name>
+		<filter-class>com.google.inject.servlet.GuiceFilter</filter-class>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>guiceFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<!-- <servlet> <servlet-name>JoinServlet</servlet-name> <servlet-class>com.deskblast.server.JoinServlet</servlet-class> 
+		</servlet> <servlet-mapping> <servlet-name>JoinServlet</servlet-name> <url-pattern>/*</url-pattern> 
+		</servlet-mapping> -->
+	<servlet>
+		<servlet-name>EchoServlet</servlet-name>
+		<servlet-class>com.deskblast.server.EchoServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>EchoServlet</servlet-name>
+		<url-pattern>/echo</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>JustListenServlet</servlet-name>
+		<servlet-class>com.deskblast.server.JustListenServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>JustListenServlet</servlet-name>
+		<url-pattern>/justlisten</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>CreateBlastServlet</servlet-name>
+		<servlet-class>com.deskblast.server.CreateBlastServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CreateBlastServlet</servlet-name>
+		<url-pattern>/createBlast</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+        <servlet-name>CreateAndStartBlastServlet</servlet-name>
+        <servlet-class>com.deskblast.server.CreateAndStartBlastServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CreateAndStartBlastServlet</servlet-name>
+        <url-pattern>/createAndStartBlast</url-pattern>
+    </servlet-mapping>
+		
+	<servlet>
+		<servlet-name>StartBlastServlet</servlet-name>
+		<servlet-class>com.deskblast.server.StartBlastServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>StartBlastServlet</servlet-name>
+		<url-pattern>/startBlast</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>CreateBlasterServlet</servlet-name>
+		<servlet-class>com.deskblast.server.CreateBlasterServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CreateBlasterServlet</servlet-name>
+		<url-pattern>/createBlaster</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>JoinBlastServlet</servlet-name>
+		<servlet-class>com.deskblast.server.JoinBlastServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>JoinBlastServlet</servlet-name>
+		<url-pattern>/joinBlast</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>BlastMessagesServlet</servlet-name>
+		<servlet-class>com.deskblast.server.BlastMessagesServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>BlastMessagesServlet</servlet-name>
+		<url-pattern>/messages</url-pattern>
+	</servlet-mapping>
+
+
+	<servlet>
+		<servlet-name>ClientBoundMessageServlet</servlet-name>
+		<servlet-class>com.deskblast.server.ClientBoundMessageServiceImpl</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ClientBoundMessageServlet</servlet-name>
+		<url-pattern>/clientBoundMessages</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>ServerBoundMessageServlet</servlet-name>
+		<servlet-class>com.deskblast.server.ServerBoundMessageServiceImpl</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ServerBoundMessageServlet</servlet-name>
+		<url-pattern>/serverBoundMessages</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>CreateBlastRpc</servlet-name>
+		<servlet-class>com.deskblast.server.CreateBlastServiceImpl</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CreateBlastRpc</servlet-name>
+		<url-pattern>/createBlastRpc</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>CreateBlasterRpc</servlet-name>
+		<servlet-class>com.deskblast.server.CreateBlasterServiceImpl</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CreateBlasterRpc</servlet-name>
+		<url-pattern>/createBlasterRpc</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>StartBlastRpc</servlet-name>
+		<servlet-class>com.deskblast.server.StartBlastServiceImpl</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>StartBlastRpc</servlet-name>
+		<url-pattern>/startBlastRpc</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>JoinBlastRpc</servlet-name>
+		<servlet-class>com.deskblast.server.JoinBlastServiceImpl</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>JoinBlastRpc</servlet-name>
+		<url-pattern>/joinBlastRpc</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>ChunkedScrapeServlet</servlet-name>
+		<servlet-class>com.deskblast.server.ChunkedScrapeServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ChunkedScrapeServlet</servlet-name>
+		<url-pattern>/chunkedscrapes</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>ScrapeServlet</servlet-name>
+		<servlet-class>com.deskblast.server.ScrapeServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ScrapeServlet</servlet-name>
+		<url-pattern>/scrapes</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>ScrapingStoppedServlet</servlet-name>
+		<servlet-class>com.deskblast.server.ScrapingStoppedServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ScrapingStoppedServlet</servlet-name>
+		<url-pattern>/stoppedShowing</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>PluginInstalledStartSharingServlet</servlet-name>
+		<servlet-class>com.deskblast.server.PluginInstalledStartScrapingServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>PluginInstalledStartSharingServlet</servlet-name>
+		<url-pattern>/pluginInstalledStartSharing</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>SlowPostServlet</servlet-name>
+		<servlet-class>com.deskblast.server.SlowPostServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>SlowPostServlet</servlet-name>
+		<url-pattern>/slowPost</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>UploadTestServlet</servlet-name>
+		<servlet-class>com.deskblast.server.UploadTestServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>UploadTestServlet</servlet-name>
+		<url-pattern>/uploadTest</url-pattern>
+	</servlet-mapping>
+	<!-- <filter> <filter-name>TestFilter</filter-name> <filter-class>com.deskblast.server.TestFilter</filter-class> 
+		</filter> <filter-mapping> <filter-name>TestFilter</filter-name> <url-pattern>/*</url-pattern> 
+		</filter-mapping> -->
+</web-app>

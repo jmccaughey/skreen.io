@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+
+<!-- 
+	note: jdk 1.6 required because some internal JDK JPEG classes
+    are used which were removed in JDK 7
+-->    
+
+<project name="shodat" default="sign-applet" basedir=".">
+	<property file="build.properties" />
+	<property name="build.dir" value="${basedir}/target" />
+	<property name="build.dir.classes" value="${build.dir}/classes" />
+	<property name="applet.name" value="${ant.project.name}-1.0" />
+	<property name="applet.jar.name" value="${applet.name}.jar" />
+	<property name="applet.unsigned.jar.name" value="${applet.name}-unsigned.jar" />
+	<property name="applet.jar.path" value="${build.dir}/${applet.jar.name}" />
+	<property name="unsigned.applet.jar.path" value="${build.dir}/${applet.unsigned.jar.name}" />
+
+	<!--<property name="signing.alias" value="webhuddle" />-->
+	<property name="signing.alias" 
+		value="05db5f50274743de398e387efaae56d6_019215cf-571d-4fed-8c5d-d384922c5963"/>
+	<!-- <property name="keystore.path" value="${build.dir}/test-keystore" /> -->
+	<property name="keystore.type" value="pkcs12" />
+	<property name="keystore.path" value="${basedir}/../signing2/2013/webhuddle_2013.pfx" />
+	<property name="keystore.password" value="password" />
+	<property name="timestamp.url" value="https://timestamp.geotrust.com/tsa"/>
+
+	<target name="clean">
+		<delete dir="${build.dir}" />
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${build.dir.classes}" />
+		<javac debug="true" destdir="${build.dir.classes}"
+			target="1.5" source="1.5"
+		>
+			<src path="src" />
+			<src path="../applet-protocol/src" />
+		</javac>
+	</target>
+
+	<target name="make.jar" >
+	    <copy todir="${build.dir.classes}">
+	        <fileset dir="src">
+	            <include name="*.gif"/>
+	            <include name="*.jpg"/>
+	        </fileset>
+	    </copy>
+		<jar basedir="${build.dir.classes}" 
+			destfile="${unsigned.applet.jar.path}"
+			excludes="**/Test*"
+		>
+		<manifest>
+			<attribute name="Permissions" value="all-permissions"/>
+			<attribute name="Application-Name" value="WebHuddle"/>
+		</manifest>
+		</jar>
+	</target>
+
+	<target name="externalCert.check" depends="make.jar">
+		<echo>keystore: ${keystore.path}</echo>
+		<condition property="keystore.exists">
+			<available file="${keystore.path}" />
+		</condition>
+	</target>
+
+	<target name="make-certificate" unless="keystore.exists" description="Generate test certificate for signing the applet" depends="externalCert.check">
+		<mkdir dir="${build.dir}" />
+		<echo>keystore.exists: ${keystore.exists}</echo>
+		<genkey alias="${signing.alias}" storepass="${keystore.password}" keystore="${keystore.path}" keyalg="rsa" verbose="true" validity="365">
+			<dname>
+				<param name="CN" value="WebHuddle, Inc." />
+				<param name="OU" value="shodat" />
+				<param name="O" value="Screen Scraper" />
+				<param name="C" value="US" />
+			</dname>
+		</genkey>
+	</target>
+	<target name="sign-applet" depends="make-certificate" description="sign the applet">
+		<signjar jar="${unsigned.applet.jar.path}" alias="${signing.alias}" 
+			keystore="${keystore.path}"	
+			storetype="${keystore.type}" 
+			storepass="${keystore.password}" 
+			verbose="true" signedjar="${applet.jar.path}" 
+			tsaurl="${timestamp.url}"/>
+	</target>
+</project>

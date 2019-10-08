@@ -1,0 +1,24 @@
+<html>
+<head></head>
+<body>
+<OBJECT id="scraper" name="Deskblast" WIDTH=1 HEIGHT=1  
+			CLASSID="CLSID:CF11AE46-27B0-475D-8187-133D1D47BFA4" 
+			CODEBASE="' + baseUrl + 'afxsimple-signed.cab#Version=-1,-1,-1,-1">
+			<PARAM name="blastId" value="">
+			<PARAM name="blasterId" value="">
+			<PARAM name="key" value="">
+			<param name="context" value="">
+			<PARAM name="host" value="">
+			<PARAM name="port" value="">
+</OBJECT>
+
+<script>
+function handleClick(){
+	scraper.resumeScraping();
+}
+</script>
+
+<a href="#" onclick="handleClick()">start</a>
+
+</body>
+</html>

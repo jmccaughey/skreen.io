@@ -1,0 +1,27 @@
+What should be the interface?
+
+-- client thread drives commands (connect, doScrape)
+-- callback(s) give client chance to cancel operations
+-- first call connect. This returns a conf ID if successful
+-- loop calling sendScrape or similar. Callback will be invoked repeatedly, giving client chance to abort. sendScrape returns an error code if the network fails
+-- screen resolution change
+
+Test with network spotty/dropped (should report network error)
+Test while changing screen resolution (should pick up new resolution)
+
+
+
+Objective-C Integration
+
+-- Objective-C(++) controller has reference to MacScraperPoster (instantiates it?)
+-- MacSCraperPoster has stop method which is intended to be called from outside thread. It sets internal stop flag
+-- pthread or NSThread context is MacScraperPoster
+-- thread first calls connect 
+-- result of successful connect is meeting entry string. How to propagate this string to UI, on UI thread?
+-- if connect fails, propagate to UI and exit thread loop
+-- thread loops calling scrape (it checks stop flag via 'shouldContinue').  libCurl progress callback also checks stop flag
+-- if progress callback encounters stop flag set, return non-zero to abort curl transfer
+-- this causes curlpost to return an error, thread loop exits (how to propagate to UI?)
+-- if data callback encounters stop flag, also return value that causes curl to abort, also return error & exit thread loop
+-- if network error on post, curl error returned. TODO: retry n times with backoff (propagate to UI)
+

@@ -1,0 +1,53 @@
+/.cvsignore/1.3/Mon Sep 24 06:55:52 2012//
+/7620073778_42d165496f_m.jpg/1.1/Fri Sep 21 05:49:48 2012/-kb/
+/CurlPosterTest.cpp/1.2/Fri Sep 21 06:48:56 2012//
+/CurlPosterThread.h/1.2/Fri Oct  5 04:17:31 2012//
+/CurlPosterThreadTest.cpp/1.1/Mon Sep 24 06:55:52 2012//
+/FileReader.h/1.1/Mon Sep 24 06:55:52 2012//
+/FileReaderTest.cpp/1.1/Mon Sep 24 06:55:52 2012//
+/ParallelPoster.cpp/1.2/Fri Oct  5 04:17:31 2012//
+/ParallelPoster.h/1.1/Mon Sep 24 06:55:52 2012//
+/ParallelPosterTest.cpp/1.2/Fri Oct  5 04:17:31 2012//
+/PostJob.h/1.2/Mon Sep 24 06:55:52 2012//
+/PosterThread.h/1.1/Wed Feb 20 05:52:37 2013//
+/SingleThreadCurlPosterTest.cpp/1.3/Thu Apr  4 18:47:58 2013//
+/ThreadedPoster.h/1.1/Fri Sep 21 05:49:48 2012//
+/mouse.c/1.1/Fri Apr  5 22:34:02 2013//
+/post.c/1.4/Thu Sep 20 05:15:50 2012//
+/time.c/1.3/Fri May 24 21:51:04 2013//
+D/CorePoster////
+D/CoreScraper////
+D/Dialog////
+D/Dialog2////
+D/clickonce////
+D/crypto////
+D/crypto2////
+D/gtk_example////
+D/gtk_grab////
+D/gtk_undecorated////
+D/npapi-test////
+D/process////
+D/standalonewin32////
+D/w64-test////
+D/xgrab////
+D/SimpleScale////
+D/AsyncTest////
+/CurlPoster.cpp/1.9/Thu Dec 19 15:29:49 2013//
+/CurlPoster.h/1.8/Thu Dec 19 01:33:00 2013//
+D/RoundTransparentWindow////
+D/BackgroundUrlFetcher////
+D/CurlTest////
+D/fbtest////
+D/HashString2////
+D/IconFetcher////
+D/LibLoad////
+D/map_test////
+D/MillisTimer////
+D/NoMenu////
+D/PngTest////
+D/ReleaseTest////
+D/ScreenTest////
+D/SwscaleTest////
+D/TimeTest////
+/.DS_Store/1.1/Fri Jan 10 05:53:45 2014//
+/RoundTransparentWindow.zip/1.1/Mon Nov  4 02:42:08 2013//

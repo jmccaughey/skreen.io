@@ -1,0 +1,4 @@
+export SKREEN_IO_SERVER_NAME=localhost
+export SKREEN_IO_REGISTER_SERVER=localhost
+
+

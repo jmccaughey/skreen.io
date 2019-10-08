@@ -1,0 +1,1 @@
+g++ npapi-file-io.cpp file-io.cpp -c -fPIC -Wall -DOS_LINUX=1 -I"third_party" -I"third_party/npapi" -m64 -O3 && g++ -shared -W1,-soname,npapi-file-io-64.so -o npapi-file-io-64.so npapi-file-io.o file-io.o -m64 -O3

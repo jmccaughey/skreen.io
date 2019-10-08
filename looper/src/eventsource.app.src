@@ -1,0 +1,19 @@
+%% Feel free to use, reuse and abuse the code in this file.
+
+{application, eventsource, [
+	{description, "skreen.io server"},
+	{vsn, "1"},
+	{modules, []},
+	{registered, [eventsource_sup]},
+	{applications, [
+		kernel,
+		stdlib,
+		cowboy,
+		jiffy,
+		inets,
+                lager,
+		mnesia
+	]},
+	{mod, {eventsource_app, []}},
+	{env, []}
+]}.
